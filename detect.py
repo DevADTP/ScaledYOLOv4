@@ -10,6 +10,7 @@ import torch
 import torch.backends.cudnn as cudnn
 from numpy import random
 
+from models.yolo import Model
 from models.experimental import attempt_load
 from utils.datasets import LoadStreams, LoadImages
 from utils.general import (
@@ -18,8 +19,8 @@ from utils.torch_utils import select_device, load_classifier, time_synchronized
 
 
 def detect(save_img=False):
-    out, source, weights, view_img, save_txt, imgsz = \
-        opt.output, opt.source, opt.weights, opt.view_img, opt.save_txt, opt.img_size
+    out, source, weights, view_img, save_txt, imgsz, cfg = \
+        opt.output, opt.source, opt.weights, opt.view_img, opt.save_txt, opt.img_size, opt.cfg
     webcam = source == '0' or source.startswith('rtsp') or source.startswith('http') or source.endswith('.txt')
 
     # Initialize
@@ -30,7 +31,19 @@ def detect(save_img=False):
     half = device.type != 'cpu'  # half precision only supported on CUDA
 
     # Load model
-    model = attempt_load(weights, map_location=device)  # load FP32 model
+    if cfg == '':
+        model = attempt_load(weights, map_location=device)  # load FP32 model
+    else:
+        import yaml  # for torch hub
+        # yaml_file = Path(cfg).name
+        with open(cfg) as f:
+            yaml = yaml.load(f, Loader=yaml.FullLoader)  # model dict
+        nc = yaml['nc']
+        model = Model(opt.cfg, ch=3, nc=nc)
+        weights_dict = torch.load(weights[0], map_location=device)
+        model.load_state_dict(weights_dict)
+        model.to(device)
+        model.eval()
     imgsz = check_img_size(imgsz, s=model.stride.max())  # check img_size
     if half:
         model.half()  # to FP16
@@ -53,7 +66,16 @@ def detect(save_img=False):
         dataset = LoadImages(source, img_size=imgsz)
 
     # Get names and colors
-    names = model.module.names if hasattr(model, 'module') else model.names
+    if hasattr(model, 'module'):
+        names = model.module.names
+    elif hasattr(model, 'names'):
+        names = model.names
+    else:
+        import yaml  # for torch hub
+        # yaml_file = Path(cfg).name
+        with open('data/coco.yaml') as f:
+            yaml = yaml.load(f, Loader=yaml.FullLoader)  # model dict
+        names = yaml['names']
     colors = [[random.randint(0, 255) for _ in range(3)] for _ in range(len(names))]
 
     # Run inference
@@ -159,6 +181,7 @@ if __name__ == '__main__':
     parser.add_argument('--agnostic-nms', action='store_true', help='class-agnostic NMS')
     parser.add_argument('--augment', action='store_true', help='augmented inference')
     parser.add_argument('--update', action='store_true', help='update all models')
+    parser.add_argument('--cfg', type=str, default='', help='model.yaml path')
     opt = parser.parse_args()
     print(opt)
 
