@@ -57,17 +57,17 @@ def train(hyp, opt, device, tb_writer=None):
     assert len(names) == nc, '%g names found for nc=%g dataset in %s' % (len(names), nc, opt.data)  # check
 
     # Model
-    pretrained = weights.endswith('.pt')
+    pretrained = weights.endswith('.pth')
     if pretrained:
         with torch_distributed_zero_first(rank):
             attempt_download(weights)  # download if not found locally
         ckpt = torch.load(weights, map_location=device)  # load checkpoint
-        model = Model(opt.cfg or ckpt['model'].yaml, ch=3, nc=nc).to(device)  # create
+        model = Model(opt.cfg, ch=3, nc=nc).to(device)  # create
         exclude = ['anchor'] if opt.cfg else []  # exclude keys
-        state_dict = ckpt['model'].float().state_dict()  # to FP32
-        state_dict = intersect_dicts(state_dict, model.state_dict(), exclude=exclude)  # intersect
+        # state_dict = ckpt['model'].float().state_dict()  # to FP32
+        state_dict = intersect_dicts(ckpt, model.state_dict(), exclude=exclude)  # intersect
         model.load_state_dict(state_dict, strict=False)  # load
-        print('Transferred %g/%g items from %s' % (len(state_dict), len(model.state_dict()), weights))  # report
+        # print('Transferred %g/%g items from %s' % (len(state_dict), len(model.state_dict()), weights))  # report
     else:
         model = Model(opt.cfg, ch=3, nc=nc).to(device)# create
         #model = model.to(memory_format=torch.channels_last)  # create
@@ -105,25 +105,25 @@ def train(hyp, opt, device, tb_writer=None):
 
     # Resume
     start_epoch, best_fitness = 0, 0.0
-    if pretrained:
-        # Optimizer
-        if ckpt['optimizer'] is not None:
-            optimizer.load_state_dict(ckpt['optimizer'])
-            best_fitness = ckpt['best_fitness']
-
-        # Results
-        if ckpt.get('training_results') is not None:
-            with open(results_file, 'w') as file:
-                file.write(ckpt['training_results'])  # write results.txt
-
-        # Epochs
-        start_epoch = ckpt['epoch'] + 1
-        if epochs < start_epoch:
-            print('%s has been trained for %g epochs. Fine-tuning for %g additional epochs.' %
-                  (weights, ckpt['epoch'], epochs))
-            epochs += ckpt['epoch']  # finetune additional epochs
-
-        del ckpt, state_dict
+    # if pretrained:
+    #     # Optimizer
+    #     if ckpt['optimizer'] is not None:
+    #         optimizer.load_state_dict(ckpt['optimizer'])
+    #         best_fitness = ckpt['best_fitness']
+    #
+    #     # Results
+    #     if ckpt.get('training_results') is not None:
+    #         with open(results_file, 'w') as file:
+    #             file.write(ckpt['training_results'])  # write results.txt
+    #
+    #     # Epochs
+    #     start_epoch = ckpt['epoch'] + 1
+    #     if epochs < start_epoch:
+    #         print('%s has been trained for %g epochs. Fine-tuning for %g additional epochs.' %
+    #               (weights, ckpt['epoch'], epochs))
+    #         epochs += ckpt['epoch']  # finetune additional epochs
+    #
+    #     del ckpt, state_dict
     
     # Image sizes
     gs = int(max(model.stride))  # grid size (max stride)
@@ -373,7 +373,7 @@ def train(hyp, opt, device, tb_writer=None):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--weights', type=str, default='yolov4-p5.pt', help='initial weights path')
+    parser.add_argument('--weights', type=str, default='yolov4-p5.pth', help='initial weights path')
     parser.add_argument('--cfg', type=str, default='', help='model.yaml path')
     parser.add_argument('--data', type=str, default='data/coco128.yaml', help='data.yaml path')
     parser.add_argument('--hyp', type=str, default='', help='hyperparameters path, i.e. data/hyp.scratch.yaml')
