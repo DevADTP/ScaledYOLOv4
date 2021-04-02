@@ -378,7 +378,7 @@ if __name__ == '__main__':
     parser.add_argument('--data', type=str, default='data/adtp.yaml', help='data.yaml path')
     parser.add_argument('--hyp', type=str, default='', help='hyperparameters path, i.e. data/hyp.scratch.yaml')
     parser.add_argument('--epochs', type=int, default=5)
-    parser.add_argument('--batch-size', type=int, default=6, help='total batch size for all GPUs')
+    parser.add_argument('--batch-size', type=int, default=3, help='total batch size for all GPUs')
     parser.add_argument('--img-size', nargs='+', type=int, default=[640, 640], help='train,test sizes')
     parser.add_argument('--rect', action='store_true', help='rectangular training')
     parser.add_argument('--resume', nargs='?', const='get_last', default=False,
