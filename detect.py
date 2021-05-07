@@ -73,7 +73,7 @@ def detect(save_img=False):
     else:
         import yaml  # for torch hub
         # yaml_file = Path(cfg).name
-        with open('data/coco.yaml') as f:
+        with open('data/adtp.yaml') as f:
             yaml = yaml.load(f, Loader=yaml.FullLoader)  # model dict
         names = yaml['names']
     colors = [[random.randint(0, 255) for _ in range(3)] for _ in range(len(names))]
@@ -111,6 +111,7 @@ def detect(save_img=False):
             save_path = str(Path(out) / Path(p).name)
             txt_path = str(Path(out) / Path(p).stem) + ('_%g' % dataset.frame if dataset.mode == 'video' else '')
             s += '%gx%g ' % img.shape[2:]  # print string
+
             gn = torch.tensor(im0.shape)[[1, 0, 1, 0]]  # normalization gain whwh
             if det is not None and len(det):
                 # Rescale boxes from img_size to im0 size
@@ -122,6 +123,7 @@ def detect(save_img=False):
                     s += '%g %ss, ' % (n, names[int(c)])  # add to string
 
                 # Write results
+
                 for *xyxy, conf, cls in det:
                     if save_txt:  # Write to file
                         xywh = (xyxy2xywh(torch.tensor(xyxy).view(1, 4)) / gn).view(-1).tolist()  # normalized xywh

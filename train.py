@@ -124,7 +124,7 @@ def train(hyp, opt, device, tb_writer=None):
     #         epochs += ckpt['epoch']  # finetune additional epochs
     #
     #     del ckpt, state_dict
-    
+
     # Image sizes
     gs = int(max(model.stride))  # grid size (max stride)
     imgsz, imgsz_test = [check_img_size(x, gs) for x in opt.img_size]  # verify imgsz are gs-multiples
@@ -252,7 +252,7 @@ def train(hyp, opt, device, tb_writer=None):
 
             # Autocast
             with amp.autocast(enabled=cuda):
-                # Forward                
+                # Forward
                 pred = model(imgs)
                 #pred = model(imgs.to(memory_format=torch.channels_last))
 
@@ -289,7 +289,8 @@ def train(hyp, opt, device, tb_writer=None):
                     result = plot_images(images=imgs, targets=targets, paths=paths, fname=f)
                     if tb_writer and result is not None:
                         tb_writer.add_image(f, result, dataformats='HWC', global_step=epoch)
-                        # tb_writer.add_graph(model, imgs)  # add model to tensorboard
+                #if ni == 0:
+                 #  tb_writer.add_graph(model, imgs)  # add model to tensorboard
 
             # end batch ------------------------------------------------------------------------------------------------
 
@@ -378,7 +379,7 @@ if __name__ == '__main__':
     parser.add_argument('--data', type=str, default='data/adtp.yaml', help='data.yaml path')
     parser.add_argument('--hyp', type=str, default='', help='hyperparameters path, i.e. data/hyp.scratch.yaml')
     parser.add_argument('--epochs', type=int, default=25)
-    parser.add_argument('--batch-size', type=int, default=3, help='total batch size for all GPUs')
+    parser.add_argument('--batch-size', type=int, default=1, help='total batch size for all GPUs')
     parser.add_argument('--img-size', nargs='+', type=int, default=[640, 640], help='train,test sizes')
     parser.add_argument('--rect', action='store_true', help='rectangular training')
     parser.add_argument('--resume', nargs='?', const='get_last', default=False,
@@ -420,6 +421,7 @@ if __name__ == '__main__':
 
     # DDP mode
     if opt.local_rank != -1:
+        assert torch.cuda.device_count() > opt.local_rank
         assert torch.cuda.device_count() > opt.local_rank
         torch.cuda.set_device(opt.local_rank)
         device = torch.device('cuda', opt.local_rank)
