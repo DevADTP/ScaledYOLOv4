@@ -262,25 +262,31 @@ if __name__ == '__main__':
     parser.add_argument('--merge', action='store_true', help='use Merge NMS')
     parser.add_argument('--verbose', action='store_true', help='report mAP by class')
     parser.add_argument('--save-txt', action='store_true', help='save results to *.txt')
+    parser.add_argument('--name', default='', help='renames results.txt to results_name.txt if supplied')
+    parser.add_argument('--logdir', type=str, default='runs/', help='logging directory')
     opt = parser.parse_args()
     opt.save_json |= opt.data.endswith('coco.yaml')
     opt.data = check_file(opt.data)  # check file
     print(opt)
 
     if opt.task in ['val', 'test']:  # run normally
-        test(opt.data,
-             opt.weights,
-             opt.batch_size,
-             opt.img_size,
-             opt.conf_thres,
-             opt.iou_thres,
-             opt.save_json,
-             opt.single_cls,
-             opt.augment,
-             opt.verbose)
+        r, _, _ = test(opt.data,
+                       opt.weights,
+                       opt.batch_size,
+                       opt.img_size,
+                       opt.conf_thres,
+                       opt.iou_thres,
+                       opt.save_json,
+                       opt.single_cls,
+                       opt.augment,
+                       opt.verbose)
+        tb_writer = SummaryWriter(log_dir=increment_dir(Path(opt.logdir) / 'exp', opt.name + '_' + str(opt.img_size)))
+        tags = ['metrics/precision', 'metrics/recall', 'metrics/mAP_0.5', 'metrics/mAP_0.5:0.95']
+        for x, tag in zip(list(r), tags):
+            tb_writer.add_scalar(tag, x, 0)
 
     elif opt.task == 'study':  # run over a range of settings and save/plot
-        for weights in ['']:
+        for weights in opt.weights:
             f = 'study_%s_%s.txt' % (Path(opt.data).stem, Path(weights).stem)  # filename to save to
             x = list(range(352, 832, 64))  # x axis
             y = []  # y axis
@@ -288,6 +294,10 @@ if __name__ == '__main__':
                 print('\nRunning %s point %s...' % (f, i))
                 r, _, t = test(opt.data, weights, opt.batch_size, i, opt.conf_thres, opt.iou_thres, opt.save_json)
                 y.append(r + t)  # results and times
+                tb_writer = SummaryWriter(log_dir=increment_dir(Path(opt.logdir) / 'exp', opt.name + '_' + str(i)))
+                tags = ['metrics/precision', 'metrics/recall', 'metrics/mAP_0.5', 'metrics/mAP_0.5:0.95']
+                for x, tag in zip(list(r), tags):
+                    tb_writer.add_scalar(tag, x, 0)
             np.savetxt(f, y, fmt='%10.4g')  # save
         os.system('zip -r study.zip study_*.txt')
         # plot_study_txt(f, x)  # plot
