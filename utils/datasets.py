@@ -71,6 +71,33 @@ def create_dataloader(path, imgsz, batch_size, stride, opt, hyp=None, augment=Fa
     return dataloader, dataset
 
 
+def gstreamer_pipeline(
+    capture_width=1920,
+    capture_height=1080,
+    display_width=1920,
+    display_height=1080,
+    framerate=60,
+    flip_method=0,
+):
+    return (
+        "nvarguscamerasrc ! "
+        "video/x-raw(memory:NVMM), "
+        "width=(int)%d, height=(int)%d, "
+        "format=(string)NV12, framerate=(fraction)%d/1 ! "
+        "nvvidconv flip-method=%d ! "
+        "video/x-raw, width=(int)%d, height=(int)%d, format=(string)BGRx ! "
+        "videoconvert ! "
+        "video/x-raw, format=(string)BGR ! appsink"
+        % (
+            capture_width,
+            capture_height,
+            framerate,
+            flip_method,
+            display_width,
+            display_height,
+        )
+    )
+
 class LoadImages:  # for inference
     def __init__(self, path, img_size=640):
         p = str(Path(path))  # os-agnostic
@@ -234,7 +261,8 @@ class LoadStreams:  # multiple IP or RTSP cameras
         for i, s in enumerate(sources):
             # Start the thread to read frames from the video stream
             print('%g/%g: %s... ' % (i + 1, n, s), end='')
-            cap = cv2.VideoCapture(0 if s == '0' else s)
+#            cap = cv2.VideoCapture(0 if s == '0' else s)
+            cap = cv2.VideoCapture(gstreamer_pipeline(flip_method=0), cv2.CAP_GSTREAMER)
             assert cap.isOpened(), 'Failed to open %s' % s
             w = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
             h = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
