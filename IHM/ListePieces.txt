@@ -1,0 +1,5 @@
+3 Capuchon_Plastique
+4 Rondelle
+9 vis
+3 ecrou_carre
+5 ecrou_rond

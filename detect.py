@@ -17,6 +17,9 @@ from utils.general import (
     check_img_size, non_max_suppression, apply_classifier, scale_coords, xyxy2xywh, plot_one_box, strip_optimizer)
 from utils.torch_utils import select_device, load_classifier, time_synchronized
 
+from IHM.package import conforme
+
+dict_pred = {"Capuchon_Plastique":[], "Rondelle":[], "vis":[], "ecrou_carre":[], "ecrou_rond":[]}
 
 def detect(save_img=False):
     out, source, weights, view_img, save_txt, imgsz, cfg = \
@@ -121,7 +124,11 @@ def detect(save_img=False):
                 for c in det[:, -1].unique():
                     n = (det[:, -1] == c).sum()  # detections per class
                     s += '%g %ss, ' % (n, names[int(c)])  # add to string
-
+                    dict_pred[names[int(c)]].append(n.item())
+                conforme.conformite_conditionnement_dict(dict_pred,"ListePieces.txt")   
+                #tab_predictions = s[8:len(s)]
+                
+                
                 # Write results
 
                 for *xyxy, conf, cls in det:
@@ -186,7 +193,11 @@ if __name__ == '__main__':
     parser.add_argument('--cfg', type=str, default='', help='model.yaml path')
     opt = parser.parse_args()
     print(opt)
-
+    
+    #print("-------------------------------")
+    #print(tab_predictions)
+    #print("-------------------------------")
+	
     with torch.no_grad():
         if opt.update:  # update all models (to fix SourceChangeWarning)
             for opt.weights in ['']:
