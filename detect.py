@@ -125,7 +125,7 @@ def detect(save_img=False):
                     n = (det[:, -1] == c).sum()  # detections per class
                     s += '%g %ss, ' % (n, names[int(c)])  # add to string
                     dict_pred[names[int(c)]].append(n.item())
-                conforme.conformite_conditionnement_dict(dict_pred,"ListePieces.txt")   
+                conforme.conformite_conditionnement_dict(dict_pred,"ListePieces.txt")
                 #tab_predictions = s[8:len(s)]
                 
                 

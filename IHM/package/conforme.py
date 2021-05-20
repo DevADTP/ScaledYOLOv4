@@ -26,7 +26,10 @@ def lecture_fichier_liste_pieces(liste_pieces = "ListePieces.txt"):
 #----------------------------------------------------------------------#
 	
 def conformite_conditionnement_dict(dict_pred, fichier_pieces):
-	
+	for key, value in dict_pred.items():
+		if(value == []):
+			value=[0]
+			dict_pred[key]=[0]
 	lecture_fichier_liste_pieces("ListePieces.txt")
 	if ((dict_pred['vis'] == dict_fiche['vis']) and 
 	(dict_pred['Capuchon_Plastique'] == dict_fiche['Capuchon_Plastique'])and 
@@ -40,8 +43,9 @@ def conformite_conditionnement_dict(dict_pred, fichier_pieces):
 	else:
 		print("Sachet pas OK")
 		port.write(b'0')
-	
-#----------------------------------------------------------------------#			
+	#print(dict_fiche)
+	#print(dict_pred)
+#----------------------------------------------------------------------#
 
 port = serial.Serial("/dev/ttyUSB0", baudrate=115200, timeout=3.0)
 
