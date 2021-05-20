@@ -114,20 +114,27 @@ def detect(save_img=False):
             save_path = str(Path(out) / Path(p).name)
             txt_path = str(Path(out) / Path(p).stem) + ('_%g' % dataset.frame if dataset.mode == 'video' else '')
             s += '%gx%g ' % img.shape[2:]  # print string
-
+            s_tmp = s
             gn = torch.tensor(im0.shape)[[1, 0, 1, 0]]  # normalization gain whwh
+            #conforme.not_detected()
+            #time.sleep(1.5)
+
+            if det is None:
+                conforme.not_detected()
             if det is not None and len(det):
                 # Rescale boxes from img_size to im0 size
                 det[:, :4] = scale_coords(img.shape[2:], det[:, :4], im0.shape).round()
-
                 # Print results
                 for c in det[:, -1].unique():
                     n = (det[:, -1] == c).sum()  # detections per class
                     s += '%g %ss, ' % (n, names[int(c)])  # add to string
-                    dict_pred[names[int(c)]].append(n.item())
+                    dict_pred[names[int(c)]] = [n.item()]
                 conforme.conformite_conditionnement_dict(dict_pred,"ListePieces.txt")
-                #tab_predictions = s[8:len(s)]
-                
+
+                for key in dict_pred:
+                    dict_pred[key].pop()
+
+
                 
                 # Write results
 
@@ -142,6 +149,7 @@ def detect(save_img=False):
                         plot_one_box(xyxy, im0, label=label, color=colors[int(cls)], line_thickness=2)
 
             # Print time (inference + NMS)
+            time.sleep(1)
             print('%sDone. (%.3fs)' % (s, t2 - t1))
 
             # Stream results

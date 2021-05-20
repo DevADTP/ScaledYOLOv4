@@ -16,10 +16,14 @@ def lecture_fichier_liste_pieces(liste_pieces = "ListePieces.txt"):
 	print("Lecture du fichier de la liste de pieces : ")
 	fichier = open(liste_pieces, "r")
 	lignes = fichier.readlines()
-	
+
 	for ligne in lignes:
 		tab_fiche = ligne
-		dict_fiche[ligne[2:len(ligne)-1]].append(int(ligne[0]))
+		'''print("\n--------------------------------\n")
+		print(int(ligne[0]))
+		print("\n--------------------------------\n")'''
+		#dict_fiche[ligne[2:len(ligne)-1]].append(int(ligne[0]))
+		dict_fiche[ligne[2:len(ligne) - 1]] =[int(ligne[0])]
 	
 #----------------------------------------------------------------------#
 
@@ -28,10 +32,10 @@ def lecture_fichier_liste_pieces(liste_pieces = "ListePieces.txt"):
 def conformite_conditionnement_dict(dict_pred, fichier_pieces):
 	for key, value in dict_pred.items():
 		if(value == []):
-			value=[0]
 			dict_pred[key]=[0]
 	lecture_fichier_liste_pieces("ListePieces.txt")
-	if ((dict_pred['vis'] == dict_fiche['vis']) and 
+
+	if ((dict_pred['vis'] == dict_fiche['vis']) and
 	(dict_pred['Capuchon_Plastique'] == dict_fiche['Capuchon_Plastique'])and 
 	(dict_pred['Rondelle'] == dict_fiche['Rondelle'])and 
 	(dict_pred['ecrou_rond'] == dict_fiche['ecrou_rond'])and 
@@ -46,6 +50,9 @@ def conformite_conditionnement_dict(dict_pred, fichier_pieces):
 	#print(dict_fiche)
 	#print(dict_pred)
 #----------------------------------------------------------------------#
+def not_detected():
+	port.write(b'0')
+
 
 port = serial.Serial("/dev/ttyUSB0", baudrate=115200, timeout=3.0)
 
