@@ -119,8 +119,8 @@ def detect(save_img=False):
             #conforme.not_detected()
             #time.sleep(1.5)
 
-            if det is None:
-                conforme.not_detected()
+            #if det is None:
+               # conforme.not_detected()
             if det is not None and len(det):
                 # Rescale boxes from img_size to im0 size
                 det[:, :4] = scale_coords(img.shape[2:], det[:, :4], im0.shape).round()
@@ -129,7 +129,7 @@ def detect(save_img=False):
                     n = (det[:, -1] == c).sum()  # detections per class
                     s += '%g %ss, ' % (n, names[int(c)])  # add to string
                     dict_pred[names[int(c)]] = [n.item()]
-                conforme.conformite_conditionnement_dict(dict_pred,"ListePieces.txt")
+                #conforme.conformite_conditionnement_dict(dict_pred,"ListePieces.txt")
 
                 for key in dict_pred:
                     dict_pred[key].pop()

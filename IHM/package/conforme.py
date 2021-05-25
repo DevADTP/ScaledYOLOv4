@@ -42,19 +42,19 @@ def conformite_conditionnement_dict(dict_pred, fichier_pieces):
 	(dict_pred['ecrou_carre'] == dict_fiche['ecrou_carre'])):
 		
 		print("Sachet OK") 
-		port.write(b'1')
+#		port.write(b'1')
 	
 	else:
 		print("Sachet pas OK")
-		port.write(b'0')
+#		port.write(b'0')
 	#print(dict_fiche)
 	#print(dict_pred)
 #----------------------------------------------------------------------#
-def not_detected():
-	port.write(b'0')
+#def not_detected():
+	#port.write(b'0')
 
 
-port = serial.Serial("/dev/ttyUSB0", baudrate=115200, timeout=3.0)
+#port = serial.Serial("/dev/ttyUSB0", baudrate=115200, timeout=3.0)
 
 #tab_predictions = ["ecrou carre","Rondelle","vis","capuchon","ecrou ronds"] # tableau contenant la prediction par YOLO
 #conformite_conditionnement(tab_predictions, "ListePieces.txt")
