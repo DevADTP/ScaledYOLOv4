@@ -251,6 +251,7 @@ class LoadStreams:  # multiple IP or RTSP cameras
         if not self.rect:
             print('WARNING: Different stream shapes detected. For optimal performance supply similarly-shaped streams.')
 
+
     def update(self, index, cap):
         # Read next stream frame in a daemon thread
         n = 0
@@ -262,7 +263,6 @@ class LoadStreams:  # multiple IP or RTSP cameras
                 _, self.imgs[index] = cap.retrieve()
                 n = 0
             time.sleep(0.01)  # wait time
-
     def __iter__(self):
         self.count = -1
         return self

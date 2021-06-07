@@ -18,10 +18,12 @@ from utils.general import (
 from utils.torch_utils import select_device, load_classifier, time_synchronized
 
 from IHM.package import conforme
+import serial
 
-dict_pred = {"Capuchon_Plastique":[], "Rondelle":[], "vis":[], "ecrou_carre":[], "ecrou_rond":[]}
-
+dict_pred={}
+tab_fiches = ["ListePieces.txt", "fiche1.txt"]
 def detect(save_img=False):
+
     out, source, weights, view_img, save_txt, imgsz, cfg = \
         opt.output, opt.source, opt.weights, opt.view_img, opt.save_txt, opt.img_size, opt.cfg
     webcam = source == '0' or source.startswith('rtsp') or source.startswith('http') or source.endswith('.txt')
@@ -81,6 +83,9 @@ def detect(save_img=False):
         names = yaml['names']
     colors = [[random.randint(0, 255) for _ in range(3)] for _ in range(len(names))]
 
+
+    conforme.init_conform(dict_pred, tab_fiches[0])
+
     # Run inference
     t0 = time.time()
     img = torch.zeros((1, 3, imgsz, imgsz), device=device)  # init img
@@ -116,11 +121,30 @@ def detect(save_img=False):
             s += '%gx%g ' % img.shape[2:]  # print string
             s_tmp = s
             gn = torch.tensor(im0.shape)[[1, 0, 1, 0]]  # normalization gain whwh
-            #conforme.not_detected()
             #time.sleep(1.5)
+            serialString = serialPort.readline()
 
-            #if det is None:
-               # conforme.not_detected()
+            global nom  # nom du chicher de la fiche scanné
+            try:
+                nom
+            except NameError:
+                nom = tab_fiches[0]  # fiche par défaut lors du lancement du programme
+
+            if (serialString.decode('Ascii') != "" ):
+                #time.sleep(1)
+                serialString = serialString.decode('Ascii')
+                serialString = serialString[0:len(serialString) - 1]
+                serialString = serialString + ".txt"
+                conforme.init_conform(dict_pred, serialString)
+                if (os.path.exists(serialString) and serialString in tab_fiches):
+                    nom = serialString
+
+            print("\n--------------------------------\n")
+            print(nom)
+            print("\n--------------------------------\n")
+
+            if det is None:
+                conforme.not_detected(serialPort)
             if det is not None and len(det):
                 # Rescale boxes from img_size to im0 size
                 det[:, :4] = scale_coords(img.shape[2:], det[:, :4], im0.shape).round()
@@ -129,13 +153,14 @@ def detect(save_img=False):
                     n = (det[:, -1] == c).sum()  # detections per class
                     s += '%g %ss, ' % (n, names[int(c)])  # add to string
                     dict_pred[names[int(c)]] = [n.item()]
-                #conforme.conformite_conditionnement_dict(dict_pred,"ListePieces.txt")
+
+
+                conforme.conformite_conditionnement_dict(dict_pred,nom, serialPort)
+
 
                 for key in dict_pred:
                     dict_pred[key].pop()
 
-
-                
                 # Write results
 
                 for *xyxy, conf, cls in det:
@@ -149,13 +174,15 @@ def detect(save_img=False):
                         plot_one_box(xyxy, im0, label=label, color=colors[int(cls)], line_thickness=2)
 
             # Print time (inference + NMS)
-            time.sleep(1)
+            #time.sleep(1.5)
             print('%sDone. (%.3fs)' % (s, t2 - t1))
 
             # Stream results
             if view_img:
                 cv2.imshow(p, im0)
+
                 if cv2.waitKey(1) == ord('q'):  # q to quit
+                    serialPort.close()
                     raise StopIteration
 
             # Save results (image with detections)
@@ -184,9 +211,13 @@ def detect(save_img=False):
 
 
 if __name__ == '__main__':
+    serialPort = serial.Serial("/dev/ttyUSB0", baudrate=115200, timeout=1.0)
+    if(serialPort.isOpen() == False):
+       serialPort.open()
+
     parser = argparse.ArgumentParser()
     parser.add_argument('--weights', nargs='+', type=str, default='yolov4-p5.pt', help='model.pt path(s)')
-    parser.add_argument('--source', type=str, default='inference/images', help='source')  # file/folder, 0 for webcam
+    parser.add_argument('--source', type=str, default='0', help='source')  # file/folder, 0 for webcam
     parser.add_argument('--output', type=str, default='inference/output', help='output folder')  # output folder
     parser.add_argument('--img-size', type=int, default=640, help='inference size (pixels)')
     parser.add_argument('--conf-thres', type=float, default=0.4, help='object confidence threshold')
@@ -198,7 +229,7 @@ if __name__ == '__main__':
     parser.add_argument('--agnostic-nms', action='store_true', help='class-agnostic NMS')
     parser.add_argument('--augment', action='store_true', help='augmented inference')
     parser.add_argument('--update', action='store_true', help='update all models')
-    parser.add_argument('--cfg', type=str, default='', help='model.yaml path')
+    parser.add_argument('--cfg', type=str, default='models/yolov4-csp.yaml', help='model.yaml path')
     opt = parser.parse_args()
     print(opt)
     

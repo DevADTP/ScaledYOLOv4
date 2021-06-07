@@ -1,60 +1,61 @@
 import serial
 from collections import Counter
+import os
 
-tab_predictions = [] 		# tableau contenant la prediction par YOLO
-tab_fiche = [] 				# tableau qui va contenir la liste des pieces de la fiche de référence
-
-#dict_pred = {"Capuchon_Plastique":[], "Rondelle":[], "vis":[], "ecrou_carre":[], "ecrou_rond":[]}
-dict_fiche = {"Capuchon_Plastique":[], "Rondelle":[], "vis":[], "ecrou_carre":[], "ecrou_rond":[]}
-
+dict_fiche = {}
 #----------------------------------------------------------------------#
 
-def lecture_fichier_liste_pieces(liste_pieces = "ListePieces.txt"):
+# INitialisation du dictionnaire de prediction
+def init_conform(dict_pred, liste_pieces):
+	if (os.path.exists(liste_pieces)):
+		fichier = open(liste_pieces, "r")
+		lignes = fichier.readlines()
+
+		for ligne in lignes:
+			dict_pred[ligne[2:len(ligne) - 1]] = [int(ligne[0])]
+
+
+def lecture_fichier_liste_pieces(liste_pieces):
 	
 	#Lecture du fichier de liste de pieces	
-	
+
 	print("Lecture du fichier de la liste de pieces : ")
-	fichier = open(liste_pieces, "r")
-	lignes = fichier.readlines()
+	if(os.path.exists(liste_pieces)):
+		fichier = open(liste_pieces, "r")
+		lignes = fichier.readlines()
 
-	for ligne in lignes:
-		tab_fiche = ligne
-		'''print("\n--------------------------------\n")
-		print(int(ligne[0]))
-		print("\n--------------------------------\n")'''
-		#dict_fiche[ligne[2:len(ligne)-1]].append(int(ligne[0]))
-		dict_fiche[ligne[2:len(ligne) - 1]] =[int(ligne[0])]
+		for ligne in lignes:
+			#dict_fiche[ligne[2:len(ligne)-1]].append(int(ligne[0]))
+			dict_fiche[ligne[2:len(ligne) - 1]] =[int(ligne[0])]
+
 	
 #----------------------------------------------------------------------#
 
 #----------------------------------------------------------------------#
-	
-def conformite_conditionnement_dict(dict_pred, fichier_pieces):
+
+
+def conformite_conditionnement_dict(dict_pred, fichier_pieces, serialPort):
+
 	for key, value in dict_pred.items():
 		if(value == []):
 			dict_pred[key]=[0]
-	lecture_fichier_liste_pieces("ListePieces.txt")
 
-	if ((dict_pred['vis'] == dict_fiche['vis']) and
-	(dict_pred['Capuchon_Plastique'] == dict_fiche['Capuchon_Plastique'])and 
-	(dict_pred['Rondelle'] == dict_fiche['Rondelle'])and 
-	(dict_pred['ecrou_rond'] == dict_fiche['ecrou_rond'])and 
-	(dict_pred['ecrou_carre'] == dict_fiche['ecrou_carre'])):
-		
-		print("Sachet OK") 
-#		port.write(b'1')
-	
+	liste_pieces = fichier_pieces
+	lecture_fichier_liste_pieces(liste_pieces)
+
+	# if ((dict_pred['vis'] == dict_fiche['vis']) and
+	# (dict_pred['Capuchon_Plastique'] == dict_fiche['Capuchon_Plastique'])and
+	# (dict_pred['Rondelle'] == dict_fiche['Rondelle'])and
+	# (dict_pred['ecrou_rond'] == dict_fiche['ecrou_rond'])and
+	# (dict_pred['ecrou_carre'] == dict_fiche['ecrou_carre'])):
+	if(dict_pred == dict_fiche):
+		print("Sachet OK")
+		serialPort.write(b'1')
 	else:
 		print("Sachet pas OK")
-#		port.write(b'0')
-	#print(dict_fiche)
-	#print(dict_pred)
+		serialPort.write(b'0')
 #----------------------------------------------------------------------#
-#def not_detected():
-	#port.write(b'0')
+def not_detected(serialPort):
+	serialPort.write(b'0')
+	print('')
 
-
-#port = serial.Serial("/dev/ttyUSB0", baudrate=115200, timeout=3.0)
-
-#tab_predictions = ["ecrou carre","Rondelle","vis","capuchon","ecrou ronds"] # tableau contenant la prediction par YOLO
-#conformite_conditionnement(tab_predictions, "ListePieces.txt")
