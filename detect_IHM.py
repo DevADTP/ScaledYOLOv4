@@ -19,11 +19,9 @@ from utils.torch_utils import select_device, load_classifier, time_synchronized
 
 from IHM.package import conforme
 import serial
-import json
-
 
 dict_pred={}
-# tab_fiches = ["ListePieces.txt", "fiche1.txt"]
+tab_fiches = ["ListePieces.txt", "fiche1.txt"]
 def detect(save_img=False):
 
     out, source, weights, view_img, save_txt, imgsz, cfg = \
@@ -86,7 +84,7 @@ def detect(save_img=False):
     colors = [[random.randint(0, 255) for _ in range(3)] for _ in range(len(names))]
 
 
-    # conforme.init_conform(dict_pred, tab_fiches[0])
+    conforme.init_conform(dict_pred, tab_fiches[0])
 
     # Run inference
     t0 = time.time()
@@ -124,25 +122,29 @@ def detect(save_img=False):
             s_tmp = s
             gn = torch.tensor(im0.shape)[[1, 0, 1, 0]]  # normalization gain whwh
             #time.sleep(1.5)
-            # serialString = serialPort.readline()
+            serialString = serialPort.readline()
 
-            # global nom  # nom du chicher de la fiche scanné
-            # try:
-            #     nom
-            # except NameError:
-            #     nom = tab_fiches[0]  # fiche par défaut lors du lancement du programme
+            global nom  # nom du chicher de la fiche scanné
+            try:
+                nom
+            except NameError:
+                nom = tab_fiches[0]  # fiche par défaut lors du lancement du programme
 
-            # if (serialString.decode('Ascii') != "" ):
-            #     #time.sleep(1)
-            #     serialString = serialString.decode('Ascii')
-            #     serialString = serialString[0:len(serialString) - 1]
-            #     serialString = serialString + ".txt"
-            #     conforme.init_conform(dict_pred, serialString)
-            #     if (os.path.exists(serialString) and serialString in tab_fiches):
-            #         nom = serialString
-            #
-            # if det is None:
-            #     conforme.not_detected(serialPort)
+            if (serialString.decode('Ascii') != "" ):
+                #time.sleep(1)
+                serialString = serialString.decode('Ascii')
+                serialString = serialString[0:len(serialString) - 1]
+                serialString = serialString + ".txt"
+                conforme.init_conform(dict_pred, serialString)
+                if (os.path.exists(serialString) and serialString in tab_fiches):
+                    nom = serialString
+
+            print("\n--------------------------------\n")
+            print(nom)
+            print("\n--------------------------------\n")
+
+            if det is None:
+                conforme.not_detected(serialPort)
             if det is not None and len(det):
                 # Rescale boxes from img_size to im0 size
                 det[:, :4] = scale_coords(img.shape[2:], det[:, :4], im0.shape).round()
@@ -152,12 +154,12 @@ def detect(save_img=False):
                     s += '%g %ss, ' % (n, names[int(c)])  # add to string
                     dict_pred[names[int(c)]] = [n.item()]
 
-                data_json = json.dumps(dict_pred, sort_keys=True, indent=4, separators=(',', ': '))
-                # conforme.conformite_conditionnement_dict(dict_pred,nom, serialPort)
+
+                conforme.conformite_conditionnement_dict(dict_pred,nom, serialPort)
 
 
-                # for key in dict_pred:
-                #     dict_pred[key].pop()
+                for key in dict_pred:
+                    dict_pred[key].pop()
 
                 # Write results
 
@@ -180,7 +182,7 @@ def detect(save_img=False):
                 cv2.imshow(p, im0)
 
                 if cv2.waitKey(1) == ord('q'):  # q to quit
-                    # serialPort.close()
+                    serialPort.close()
                     raise StopIteration
 
             # Save results (image with detections)
@@ -208,9 +210,9 @@ def detect(save_img=False):
     print('Done. (%.3fs)' % (time.time() - t0))
 
 if __name__ == '__main__':
-    # serialPort = serial.Serial("/dev/ttyUSB0", baudrate=115200, timeout=1.0)
-    # if(serialPort.isOpen() == False):
-    #    serialPort.open()
+    serialPort = serial.Serial("/dev/ttyUSB0", baudrate=115200, timeout=1.0)
+    if(serialPort.isOpen() == False):
+       serialPort.open()
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--weights', nargs='+', type=str, default='yolov4-p5.pt', help='model.pt path(s)')
@@ -230,12 +232,11 @@ if __name__ == '__main__':
     opt = parser.parse_args()
     print(opt)
 
+	
     with torch.no_grad():
         if opt.update:  # update all models (to fix SourceChangeWarning)
             for opt.weights in ['']:
                 detect()
                 strip_optimizer(opt.weights)
-
         else:
             detect()
-

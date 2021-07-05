@@ -1,8 +1,10 @@
 import serial
 from collections import Counter
 import os
+from flask import Flask, jsonify, request
 
 dict_fiche = {}
+dict_pred={}
 #----------------------------------------------------------------------#
 
 # INitialisation du dictionnaire de prediction
@@ -32,7 +34,6 @@ def lecture_fichier_liste_pieces(liste_pieces):
 #----------------------------------------------------------------------#
 
 #----------------------------------------------------------------------#
-
 
 def conformite_conditionnement_dict(dict_pred, fichier_pieces, serialPort):
 
