@@ -41,8 +41,7 @@ class Detector(object):
         self.classes = [0, 1, 2, 3, 4] if classes is None else classes
         assert isinstance(self.classes, list), 'We must have at least 2 classes, self.classes must be a list'
 
-        #self.device = select_device('cuda:0')
-        self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
+        self.device = select_device('')
         # Load model
         if cfg == '':
             self.model = attempt_load(weights, map_location=self.device)  # load FP32 model
