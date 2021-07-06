@@ -33,6 +33,7 @@ class Detector(object):
                  iou_thres=0.5, classes=None, agnostic_nms=True, cfg='models/yolov4-csp.yaml'):
         weight_path = '../weights/Trainings/Must/'
         self.weights = os.path.join(weight_path, weights)
+
         self.conf_thres = conf_thres
         self.img_size = img_size
         self.iou_thres = iou_thres
@@ -42,6 +43,8 @@ class Detector(object):
         assert isinstance(self.classes, list), 'We must have at least 2 classes, self.classes must be a list'
 
         self.device = select_device('')
+        #self.device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
+
         # Load model
         if cfg == '':
             self.model = attempt_load(weights, map_location=self.device)  # load FP32 model
@@ -99,5 +102,9 @@ class Detector(object):
         return data_json
 
 if __name__ == '__main__':
-    detector_1 = Detector()
-    print(detector_1.detect())
+    detector_1 = Detector( weights='../weights/Trainings/Must/best_New_data_1_2.pth', cfg='models/yolov4-csp.yaml')
+    with open("../106.jpg", "rb") as image:
+        f = image.read()
+        b = bytearray(f)
+    a = detector_1.detect(b)
+    print(a)
