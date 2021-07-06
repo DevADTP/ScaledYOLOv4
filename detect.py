@@ -21,7 +21,7 @@ from IHM.package import conforme
 import serial
 
 dict_pred={}
-tab_fiches = ["ListePieces.txt", "fiche1.txt"]
+tab_fiches = ["ListePieces.txt", "Fiche1.txt", "Fiche2.txt", "Fiche3.txt"]
 def detect(save_img=False):
 
     out, source, weights, view_img, save_txt, imgsz, cfg = \
