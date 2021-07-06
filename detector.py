@@ -29,16 +29,15 @@ import json
 
 class Detector(object):
 
-    def __init__(self, weights='../weights/Trainings/Must/best_New_data_1_2.pth', img_size=640, conf_thres=0.4, iou_thres=0.5, classes=None,
-                 agnostic_nms=True, cfg='models/yolov4-csp.yaml'):
-
-        self.weights = '../weights/Trainings/Must/best_New_data_1_2.pth'
-        self.conf_thres = 0.4
-        self.img_size = 640
-        self.iou_thres = 0.5
-        self.agnostic_nms = True
-        self.cfg = 'models/yolov4-csp.yaml'
-
+    def __init__(self, weights='best_New_data_1_2.pth', img_size=640, conf_thres=0.4,
+                 iou_thres=0.5, classes=None, agnostic_nms=True, cfg='models/yolov4-csp.yaml'):
+        weight_path = '../weights/Trainings/Must/'
+        self.weights = os.path.join(weight_path, weights)
+        self.conf_thres = conf_thres
+        self.img_size = img_size
+        self.iou_thres = iou_thres
+        self.agnostic_nms = agnostic_nms
+        self.cfg = cfg
         self.classes = [0, 1, 2, 3, 4] if classes is None else classes
         assert isinstance(self.classes, list), 'We must have at least 2 classes, self.classes must be a list'
 
@@ -46,13 +45,13 @@ class Detector(object):
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
         # Load model
         if cfg == '':
-            model = attempt_load(weights, map_location=self.device)  # load FP32 model
+            self.model = attempt_load(weights, map_location=self.device)  # load FP32 model
         else:
             with open(cfg) as f:
                 yaml_f = yaml.load(f, Loader=yaml.FullLoader)  # model dict
             nc = yaml_f['nc']
             self.model = Model(cfg, ch=3, nc=nc)
-            weights_dict = torch.load(weights[0], map_location=self.device)
+            weights_dict = torch.load(weights, map_location=self.device)
             self.model.load_state_dict(weights_dict)
             self.model.to(self.device)
             self.model.eval()
@@ -60,12 +59,14 @@ class Detector(object):
     def prepare_image(self, image_bytes):
 
         image = transforms.ToTensor()(Image.open(io.BytesIO(image_bytes)))  # TODO a peut etre convertir en numpy
-        imgsz = check_img_size(image.shape, s=self.model.stride.max())  # check img_size
-        img = letterbox(image, new_shape=imgsz)[0]
+        # imgsz = check_img_size(image.shape, s=self.model.stride.max())  # check img_size
+        # img = letterbox(image, new_shape=imgsz)[0]
+        if image.shape != (self.img_size, self.img_size):
+            image = letterbox(image, new_shape=(self.img_size, self.img_size))[0]
         # Convert
-        img = img[:, :, ::-1].transpose(2, 0, 1)  # BGR to RGB, to 3x416x416
-        img = transforms.ToTensor()(np.ascontiguousarray(img)).to(self.device)
-        return img.unsqueeze(0)
+        image = image[:, :, ::-1].transpose(2, 0, 1)  # BGR to RGB, to 3x416x416
+        image = transforms.ToTensor()(np.ascontiguousarray(image)).to(self.device)
+        return image.unsqueeze(0)
 
     def detect(self, image):
 
