@@ -47,27 +47,24 @@ class Detector(object):
 
         # Load model
         if cfg == '':
-            self.model = attempt_load(weights, map_location=self.device)  # load FP32 model
+            self.model = attempt_load(self.weights, map_location=self.device)  # load FP32 model
         else:
             with open(cfg) as f:
                 yaml_f = yaml.load(f, Loader=yaml.FullLoader)  # model dict
             nc = yaml_f['nc']
             self.model = Model(cfg, ch=3, nc=nc)
-            weights_dict = torch.load(weights, map_location=self.device)
+            weights_dict = torch.load(self.weights, map_location=self.device)
             self.model.load_state_dict(weights_dict)
+            print('weights loaded')
             self.model.to(self.device)
             self.model.eval()
 
     def prepare_image(self, image_bytes):
 
-        image = transforms.ToTensor()(Image.open(io.BytesIO(image_bytes)))  # TODO a peut etre convertir en numpy
-        # imgsz = check_img_size(image.shape, s=self.model.stride.max())  # check img_size
-        # img = letterbox(image, new_shape=imgsz)[0]
-        if image.shape != (self.img_size, self.img_size):
-            image = letterbox(image, new_shape=(self.img_size, self.img_size))[0]
+        image = Image.open(io.BytesIO(image_bytes))  # TODO a peut etre convertir en numpy
+        image = transforms.ToTensor()(letterbox(np.array(image), new_shape=(self.img_size, self.img_size))[0])
         # Convert
-        image = image[:, :, ::-1].transpose(2, 0, 1)  # BGR to RGB, to 3x416x416
-        image = transforms.ToTensor()(np.ascontiguousarray(image)).to(self.device)
+        image = image.to(self.device)
         return image.unsqueeze(0)
 
     def detect(self, image):
@@ -78,33 +75,27 @@ class Detector(object):
         names = yaml_f['names']
 
         # Run inference
-        pred = self.model(image, augment=False)[0]
+        pred = self.model(image, augment=False)[0].detach().to('cpu')
 
         # Apply NMS
         pred = non_max_suppression(pred, self.conf_thres, self.iou_thres, classes=self.classes,
                                    agnostic=self.agnostic_nms)
 
         # Process detections
-        # TODO check pred shape
-        print('check pred shape')
-        print(pred.shape)
         data_json = json.dumps({})
+        dict_pred = {}
         for i, det in enumerate(pred):  # detections per image
-            dict_pred = {}
+
             if det is not None and len(det):
+                # print('######## det #########')
+                # print(det)
                 # Print results
                 for c in det[:, -1].unique():
                     n = (det[:, -1] == c).sum()  # detections per class
                     dict_pred[names[int(c)]] = [n.item()]
 
-                data_json = json.dumps(dict_pred, sort_keys=True, indent=4, separators=(',', ': '))
+                # data_json = json.dumps(dict_pred, sort_keys=True, indent=4, separators=(',', ': '))
 
-        return data_json
+        return dict_pred
 
-if __name__ == '__main__':
-    detector_1 = Detector( weights='../weights/Trainings/Must/best_New_data_1_2.pth', cfg='models/yolov4-csp.yaml')
-    with open("../106.jpg", "rb") as image:
-        f = image.read()
-        b = bytearray(f)
-    a = detector_1.detect(b)
-    print(a)
+        # return data_json
