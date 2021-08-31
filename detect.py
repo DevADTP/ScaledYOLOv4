@@ -10,6 +10,7 @@ import torch
 import torch.backends.cudnn as cudnn
 from numpy import random
 
+import interface_graphique
 from models.yolo import Model
 from models.experimental import attempt_load
 from utils.datasets import LoadStreams, LoadImages
@@ -211,7 +212,6 @@ if __name__ == '__main__':
     # serialPort = serial.Serial("/dev/ttyUSB0", baudrate=115200, timeout=1.0)
     # if(serialPort.isOpen() == False):
     #    serialPort.open()
-
     parser = argparse.ArgumentParser()
     parser.add_argument('--weights', nargs='+', type=str, default='yolov4-p5.pt', help='model.pt path(s)')
     parser.add_argument('--source', type=str, default='0', help='source')  # file/folder, 0 for webcam

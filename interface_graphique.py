@@ -5,6 +5,7 @@ import cv2
 
 import _thread
 import serial
+import os
 
 class interface:
     def __init__(self):
@@ -73,17 +74,19 @@ class interface:
         self.window.attributes("-fullscreen", self.fullScreenState)
 
     def ChangeLabels(self):
-
-        while(1):
-            serialString = serialPort.readline()
-            serialString = serialString.decode('Ascii')
-            serialString = serialString[0:len(serialString) - 1]
-            self.sachet_ok.set(str("okokoko"))
-            self.manquant.set(str("mmmm"))
-            self.trop.set(str("tttt"))
-            self.fiche.set(str("fff"))
+        car = os.system('python detect_IHM.py --weights ../weights/Trainings/Must/best_New_data_1_2.pth --source 0')
+        # while(1):
+        #     serialString = serialPort.readline()
+        #     serialString = serialString.decode('Ascii')
+        #     serialString = serialString[0:len(serialString) - 1]
+        #self.sachet_ok.set(str("___1___"))
+        self.sachet_ok.set(str("___1___"))
+        self.manquant.set(str("___2___"))
+        self.trop.set(str("___3___"))
+        self.fiche.set(str("___4___"))
 
 if __name__ == '__main__':
-    serialPort = serial.Serial("/dev/ttyUSB0", baudrate=115200, timeout=1.0)
+
+    #serialPort = serial.Serial("/dev/ttyUSB0", baudrate=115200, timeout=1.0)
     app = interface()
-    serialPort.close()
+    #serialPort.close()

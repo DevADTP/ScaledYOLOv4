@@ -9,7 +9,7 @@ detectors = {
     'detector_1': Detector(weights='best_New_data_1_2.pth', cfg='models/yolov4-csp.yaml',
                            # classes=[0, 1, 4]
                            )
-    # 'detector_2': Detector(weights=d autres poids, cfg='models/un autre model ou le meme')
+    #'detector_2': Detector('exp3_best_New_data.pth', cfg='models/yolov4-csp.yaml')
 }
 
 
@@ -24,4 +24,4 @@ def predict():
 
 
 if __name__ == '__main__':
-    app.run() 
+    app.run(host='0.0.0.0')

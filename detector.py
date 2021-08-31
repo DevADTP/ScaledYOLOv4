@@ -76,7 +76,6 @@ class Detector(object):
 
         # Run inference
         pred = self.model(image, augment=False)[0].detach().to('cpu')
-
         # Apply NMS
         pred = non_max_suppression(pred, self.conf_thres, self.iou_thres, classes=self.classes,
                                    agnostic=self.agnostic_nms)
