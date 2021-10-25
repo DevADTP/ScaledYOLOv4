@@ -6,12 +6,12 @@ from detector import Detector
 
 app = Flask(__name__)
 detectors = {
-    'detector_1': Detector(weights='best_New_data_1_2.pth', cfg='models/yolov4-csp.yaml',
+    'detector_1': Detector(weights='best_improve.pth', cfg='models/yolov4-csp.yaml',
                            # classes=[0, 1, 4]
                            )
+
     #'detector_2': Detector('exp3_best_New_data.pth', cfg='models/yolov4-csp.yaml')
 }
-
 
 @app.route('/predict', methods=['POST'])
 def predict():
