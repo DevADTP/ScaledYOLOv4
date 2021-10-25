@@ -72,10 +72,10 @@ def create_dataloader(path, imgsz, batch_size, stride, opt, hyp=None, augment=Fa
 
 
 def gstreamer_pipeline(
-    capture_width=1920,
-    capture_height=1080,
-    display_width=1920,
-    display_height=1080,
+    capture_width=1280,
+    capture_height=720,
+    display_width=1280,
+    display_height=720,
     framerate=1,
     flip_method=0,
 ):

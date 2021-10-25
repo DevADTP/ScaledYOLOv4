@@ -4,7 +4,7 @@ val: /home/adtp/github/adtp/Data_tmp
 test: /home/adtp/github/adtp/Data_tmp
 
 # number of classes
-nc: 5
+nc: 7
 
 # class names
-names: ['Capuchon_Plastique', 'Rondelle', 'vis', 'ecrou_carre', 'ecrou_rond',]
+names: ['Capuchon_Plastique', 'Rondelle', 'vis', 'ecrou_carre', 'ecrou_rond','petit-ecrou', 'petit-vis']

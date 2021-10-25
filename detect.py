@@ -140,8 +140,8 @@ def detect(save_img=False):
                     nom = serialString
 
             print("\n--------------------------------\n")
-            print(nom)
-            print("\n--------------------------------\n")
+            print("fiche utilisée : " + nom)
+            
 
             if det is None:
                 conforme.not_detected(serialPort)
@@ -175,8 +175,9 @@ def detect(save_img=False):
 
             # Print time (inference + NMS)
             #time.sleep(1.5)
-            print('%sDone. (%.3fs)' % (s, t2 - t1))
-
+            #print('%sDone. (%.3fs)' % (s, t2 - t1))
+            print("pièces detectées : " + s[11:len(s)])
+            print("\n--------------------------------\n")
             # Stream results
             if view_img:
                 cv2.imshow(p, im0)
@@ -219,8 +220,8 @@ if __name__ == '__main__':
     parser.add_argument('--weights', nargs='+', type=str, default='yolov4-p5.pt', help='model.pt path(s)')
     parser.add_argument('--source', type=str, default='0', help='source')  # file/folder, 0 for webcam
     parser.add_argument('--output', type=str, default='inference/output', help='output folder')  # output folder
-    parser.add_argument('--img-size', type=int, default=640, help='inference size (pixels)')
-    parser.add_argument('--conf-thres', type=float, default=0.4, help='object confidence threshold')
+    parser.add_argument('--img-size', type=int, default=736, help='inference size (pixels)')
+    parser.add_argument('--conf-thres', type=float, default=0.7, help='object confidence threshold')
     parser.add_argument('--iou-thres', type=float, default=0.5, help='IOU threshold for NMS')
     parser.add_argument('--device', default='', help='cuda device, i.e. 0 or 0,1,2,3 or cpu')
     parser.add_argument('--view-img', action='store_true', help='display results')
