@@ -7,4 +7,5 @@ test: /home/adtp/github/adtp/Data_tmp
 nc: 7
 
 # class names
-names: ['Capuchon_Plastique', 'Rondelle', 'vis', 'ecrou_carre', 'ecrou_rond','petit-ecrou', 'petit-vis']
+#names: ['Capuchon_Plastique', 'Rondelle', 'vis', 'ecrou_carre', 'ecrou_rond','petit_ecrou', 'petit_vis']
+names: ['A', 'B', 'C', 'G', 'D','E', 'F']
