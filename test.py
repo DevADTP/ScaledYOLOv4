@@ -288,7 +288,7 @@ if __name__ == '__main__':
     elif opt.task == 'study':  # run over a range of settings and save/plot
         for weights in opt.weights:
             f = 'study_%s_%s.txt' % (Path(opt.data).stem, Path(weights).stem)  # filename to save to
-            x = list(range(352, 832, 64))  # x axis
+            x = list(range(352, 2040, 64))  # x axis
             y = []  # y axis
             for i in x:  # img-size
                 print('\nRunning %s point %s...' % (f, i))

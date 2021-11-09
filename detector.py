@@ -29,7 +29,7 @@ import json
 
 class Detector(object):
 
-    def __init__(self, weights='best_New_data_1_2.pth', img_size=640, conf_thres=0.4,
+    def __init__(self, weights='best_improve.pth', img_size=640, conf_thres=0.6,
                  iou_thres=0.5, classes=None, agnostic_nms=True, cfg='models/yolov4-csp.yaml'):
         weight_path = '../weights/Trainings/Must/'
         self.weights = os.path.join(weight_path, weights)
@@ -39,7 +39,7 @@ class Detector(object):
         self.iou_thres = iou_thres
         self.agnostic_nms = agnostic_nms
         self.cfg = cfg
-        self.classes = [0, 1, 2, 3, 4] if classes is None else classes
+        self.classes = [0, 1, 2, 3, 4, 5, 6] if classes is None else classes
         assert isinstance(self.classes, list), 'We must have at least 2 classes, self.classes must be a list'
 
         self.device = select_device('')
@@ -79,7 +79,6 @@ class Detector(object):
         # Apply NMS
         pred = non_max_suppression(pred, self.conf_thres, self.iou_thres, classes=self.classes,
                                    agnostic=self.agnostic_nms)
-
         # Process detections
         data_json = json.dumps({})
         dict_pred = {}

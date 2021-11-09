@@ -19,9 +19,22 @@ from utils.torch_utils import select_device, load_classifier, time_synchronized
 
 from IHM.package import conforme
 import serial
+import json
+import paho.mqtt.client as mqtt
 
+broker_adress = "192.168.72.118"
+client = mqtt.Client("P1")
+client.connect(broker_adress)
 dict_pred={}
-tab_fiches = ["ListePieces.txt", "fiche1.txt"]
+trame={"loc":"ESAT MENOGE","poste":1,"qrcode":"BBV59480A","quantity":60}
+tab_fiches = ["BBV59480A.txt", "CCV59480A.txt"]
+
+def Merge(dict1, dict2):
+    # function that merges two dict (changes made in dict2)
+    return(dict2.update(dict1))
+
+
+
 def detect(save_img=False):
 
     out, source, weights, view_img, save_txt, imgsz, cfg = \
@@ -103,6 +116,7 @@ def detect(save_img=False):
 
         # Apply NMS
         pred = non_max_suppression(pred, opt.conf_thres, opt.iou_thres, classes=opt.classes, agnostic=opt.agnostic_nms)
+
         t2 = time_synchronized()
 
         # Apply Classifier
@@ -124,7 +138,7 @@ def detect(save_img=False):
             #time.sleep(1.5)
             serialString = serialPort.readline()
 
-            global nom  # nom du chicher de la fiche scanné
+            global nom  # nom du fhicher de la fiche scanné
             try:
                 nom
             except NameError:
@@ -140,8 +154,8 @@ def detect(save_img=False):
                     nom = serialString
 
             print("\n--------------------------------\n")
-            print(nom)
-            print("\n--------------------------------\n")
+            print("fiche utilisée : " +nom)
+
 
             if det is None:
                 conforme.not_detected(serialPort)
@@ -154,9 +168,18 @@ def detect(save_img=False):
                     s += '%g %ss, ' % (n, names[int(c)])  # add to string
                     dict_pred[names[int(c)]] = [n.item()]
 
+                valide = conforme.conformite_conditionnement_dict(dict_pred,nom, serialPort)
 
-                conforme.conformite_conditionnement_dict(dict_pred,nom, serialPort)
+                #Mise en forme de la trame pour envoie vers le broker
+                dict_quantity = conforme.get_dict_quantity(dict_pred)
+                #conversion des valeur de tableau à integer
+                #for key, value in copie_dict_pred.items():
+                 #   copie_dict_pred[key] = value[0]
 
+                trame = {"loc": "ESAT MENOGE", "poste": 1, "qrcode": nom, "quantity": 60 , "valide":valide}
+                Merge(dict_quantity,trame)
+                trame = json.dumps(trame)
+                client.publish("IA_inference_poste1", trame)
 
                 for key in dict_pred:
                     dict_pred[key].pop()
@@ -175,8 +198,10 @@ def detect(save_img=False):
 
             # Print time (inference + NMS)
             #time.sleep(1.5)
-            print('%sDone. (%.3fs)' % (s, t2 - t1))
+            #print('%sDone. (%.3fs)' % (s, t2 - t1))
+            print("pièces détéctées : " + s[11:len(s)])
 
+            print("\n--------------------------------\n")
             # Stream results
             if view_img:
                 cv2.imshow(p, im0)
