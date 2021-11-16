@@ -26,7 +26,10 @@ broker_adress = "192.168.72.118"
 client = mqtt.Client("P1")
 client.connect(broker_adress)
 dict_pred={}
-trame={"loc":"ESAT MENOGE","poste":1,"qrcode":"BBV59480A","quantity":60}
+send_ok = 0
+quantity = 2
+cpt_qty =quantity
+trame={"loc":"ESAT MENOGE","poste":1,"qrcode":"BBV59480A","quantity":cpt_qty}
 tab_fiches = ["BBV59480A.txt", "CCV59480A.txt"]
 
 def Merge(dict1, dict2):
@@ -138,6 +141,8 @@ def detect(save_img=False):
             #time.sleep(1.5)
             serialString = serialPort.readline()
 
+            global cpt_qty
+            global send_ok
             global nom  # nom du fhicher de la fiche scanné
             try:
                 nom
@@ -159,6 +164,22 @@ def detect(save_img=False):
 
             if det is None:
                 conforme.not_detected(serialPort)
+                trame = {"loc": "ESAT MENOGE", "poste": 1, "qrcode": "BBV59480A.txt",
+                         "quantity": cpt_qty, "valide": 0, "A": 0, "qtyA": 4, "B": 0, "qtyB": 4,
+                         "C": 0, "qtyC": 12, "G": 0, "qtyG": 0, "D": 0, "qtyD": 4, "E": 0, "qtyE": 4, "F": 0, "qtyF": 4}
+                #if(cpt_qty == 0):
+                 #   cpt_qty = quantity
+                if(send_ok == 1):
+                    cpt_qty = cpt_qty-1
+
+                send_ok = 0
+                print("/*/*/*/*/*/*/*/\n")
+                print(send_ok)
+                print(cpt_qty)
+                print("/*/*/*/*/*/*/*/\n")
+
+                trame = json.dumps(trame)
+                client.publish("IA_inference_poste1", trame)
             if det is not None and len(det):
                 # Rescale boxes from img_size to im0 size
                 det[:, :4] = scale_coords(img.shape[2:], det[:, :4], im0.shape).round()
@@ -169,14 +190,17 @@ def detect(save_img=False):
                     dict_pred[names[int(c)]] = [n.item()]
 
                 valide = conforme.conformite_conditionnement_dict(dict_pred,nom, serialPort)
-
                 #Mise en forme de la trame pour envoie vers le broker
                 dict_quantity = conforme.get_dict_quantity(dict_pred)
-                #conversion des valeur de tableau à integer
-                #for key, value in copie_dict_pred.items():
-                 #   copie_dict_pred[key] = value[0]
 
-                trame = {"loc": "ESAT MENOGE", "poste": 1, "qrcode": nom, "quantity": 60 , "valide":valide}
+                if(valide == 1):
+                    send_ok =1
+                print("/*/*/*/*/*/*/*/\n")
+                print(send_ok)
+                print(cpt_qty)
+                print("/*/*/*/*/*/*/*/\n")
+
+                trame = {"loc": "ESAT MENOGE", "poste": 1, "qrcode": nom, "quantity": cpt_qty , "valide":valide} # valide vs send_ok
                 Merge(dict_quantity,trame)
                 trame = json.dumps(trame)
                 client.publish("IA_inference_poste1", trame)
