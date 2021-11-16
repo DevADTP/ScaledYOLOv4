@@ -23,11 +23,16 @@ import serial
 import json
 import paho.mqtt.client as mqtt
 
+QrCode_scanned = 0
+send_ok = 0
+quantity = 2
+cpt_qty =quantity
+
 broker_adress = "127.0.0.1"
 client = mqtt.Client("P1")
 client.connect(broker_adress)
 dict_pred={}
-trame={"loc":"ESAT MENOGE","poste":1,"qrcode":"BBV59480A","quantity":60}
+trame={"loc":"ESAT MENOGE","poste":1,"qrcode":"BBV59480A","quantity":cpt_qty}
 tab_fiches = ["BBV59480A.txt", "CCV59480A.txt"]
 
 def Merge(dict1, dict2):
@@ -135,28 +140,50 @@ def detect(save_img=False):
             gn = torch.tensor(im0.shape)[[1, 0, 1, 0]]  # normalization gain whwh
             #time.sleep(1.5)
             serialString = serialPort.readline()
-
-            global nom  # nom du chicher de la fiche scanné
+			
+            global cpt_qty
+            global send_ok
+            global QrCode_scanned
+            global nom  # nom du fhicher de la fiche scanné
             try:
                 nom
             except NameError:
                 nom = tab_fiches[0]  # fiche par défaut lors du lancement du programme
 
             if (serialString.decode('Ascii') != "" ):
-                #time.sleep(1)
+                QrCode_scanned =1
                 serialString = serialString.decode('Ascii')
                 serialString = serialString[0:len(serialString) - 1]
                 serialString = serialString + ".txt"
                 conforme.init_conform(dict_pred, serialString)
-                if (os.path.exists(serialString) and serialString in tab_fiches):
+                if (os.path.exists(serialString) and fichier in tab_fiches):
                     nom = serialString
-
+            
+            fiche = nom
+            fiche = fiche[::-1] # on inverse le string
+            fiche = fiche[4:] # on supprrime le .txt
+            fiche = fiche[::-1] # on reinverse le string pour recuperer le nom de la fiche
             print("\n--------------------------------\n")
-            print("fiche utilisée : " + nom)
+            print("fiche utilisée : " + fiche)
             
 
             if det is None:
                 conforme.not_detected(serialPort)
+                trame = {"loc": "ESAT MENOGE", "poste": 1, "qrcode": fiche,
+                        "quantity": cpt_qty, "valide": 0, "A": 0, "qtyA": 4, "B": 0, "qtyB": 4, "C": 0, 
+                        "qtyC": 12, "G": 0, "qtyG": 0, "D": 0, "qtyD": 4, "E": 0, "qtyE": 4, "F": 0, "qtyF": 4}
+                if(cpt_qty == 0):
+                    if(QrCode_scanned ==1):
+                       cpt_qty = quantity
+                       QrCode_scanned = 0
+                if(send_ok == 1):
+                    cpt_qty = cpt_qty-1
+
+                send_ok = 0
+
+                trame = json.dumps(trame)
+                client.publish("IA_inference_poste1", trame)
+
             if det is not None and len(det):
                 # Rescale boxes from img_size to im0 size
                 det[:, :4] = scale_coords(img.shape[2:], det[:, :4], im0.shape).round()
@@ -170,12 +197,12 @@ def detect(save_img=False):
 
                 #Mise en forme de la trame pour envoie vers le broker
                 copie_dict_pred = dict_pred.copy()
-                #conversion des valeur de tableau à integer
-                for key, value in copie_dict_pred.items():
-                    copie_dict_pred[key] = value[0]
-				
+                
                 dict_quantity = conforme.get_dict_quantity(dict_pred)
-                trame = {"loc": "ESAT MENOGE", "poste": 1, "qrcode": nom, "quantity": 60 , "valide":valide}
+                if(valide == 1):
+                    send_ok =1
+
+                trame = {"loc": "ESAT MENOGE", "poste": 1, "qrcode": fiche, "quantity": cpt_qty , "valide":send_ok} # valide vs send_ok
                 Merge(dict_quantity,trame)
                 trame = json.dumps(trame)
                 client.publish("IA_inference_poste1", trame)
