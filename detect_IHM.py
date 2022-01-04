@@ -26,7 +26,8 @@ broker_adress = "192.168.72.118"
 client = mqtt.Client("P1")
 client.connect(broker_adress)
 dict_pred={}
-send_ok = 0
+send_ok = 0 # boolean qui envoie la validité du sachet en json
+QrCode_scanned = 0 # # envoie d'un signal pour dire qu'un qr code a ete scanné
 quantity = 2
 cpt_qty =quantity
 trame={"loc":"ESAT MENOGE","poste":1,"qrcode":"BBV59480A","quantity":cpt_qty}
@@ -143,6 +144,7 @@ def detect(save_img=False):
 
             global cpt_qty
             global send_ok
+            global QrCode_scanned
             global nom  # nom du fhicher de la fiche scanné
             try:
                 nom
@@ -150,7 +152,7 @@ def detect(save_img=False):
                 nom = tab_fiches[0]  # fiche par défaut lors du lancement du programme
 
             if (serialString.decode('Ascii') != "" ):
-                #time.sleep(1)
+                QrCode_scanned = 1
                 serialString = serialString.decode('Ascii')
                 serialString = serialString[0:len(serialString) - 1]
                 serialString = serialString + ".txt"
@@ -161,22 +163,19 @@ def detect(save_img=False):
             print("\n--------------------------------\n")
             print("fiche utilisée : " +nom)
 
-
             if det is None:
                 conforme.not_detected(serialPort)
                 trame = {"loc": "ESAT MENOGE", "poste": 1, "qrcode": "BBV59480A.txt",
                          "quantity": cpt_qty, "valide": 0, "A": 0, "qtyA": 4, "B": 0, "qtyB": 4,
                          "C": 0, "qtyC": 12, "G": 0, "qtyG": 0, "D": 0, "qtyD": 4, "E": 0, "qtyE": 4, "F": 0, "qtyF": 4}
-                #if(cpt_qty == 0):
-                 #   cpt_qty = quantity
+                if(cpt_qty == 0):
+                    if(QrCode_scanned == 1):
+                        cpt_qty = quantity
+                        QrCode_scanned = 0
                 if(send_ok == 1):
                     cpt_qty = cpt_qty-1
 
                 send_ok = 0
-                print("/*/*/*/*/*/*/*/\n")
-                print(send_ok)
-                print(cpt_qty)
-                print("/*/*/*/*/*/*/*/\n")
 
                 trame = json.dumps(trame)
                 client.publish("IA_inference_poste1", trame)
@@ -195,10 +194,9 @@ def detect(save_img=False):
 
                 if(valide == 1):
                     send_ok =1
+
                 print("/*/*/*/*/*/*/*/\n")
-                print(send_ok)
-                print(cpt_qty)
-                print("/*/*/*/*/*/*/*/\n")
+                print(QrCode_scanned)
 
                 trame = {"loc": "ESAT MENOGE", "poste": 1, "qrcode": nom, "quantity": cpt_qty , "valide":valide} # valide vs send_ok
                 Merge(dict_quantity,trame)

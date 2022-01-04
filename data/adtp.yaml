@@ -1,6 +1,6 @@
 # train and val datasets (image directory or *.txt file with image paths)
-train: /home/adtp/github/adtp/data_improve/train
-val: /home/adtp/github/adtp/data_improve/val
+train: /home/adtp/github/adtp/Data_menoge/train
+val: /home/adtp/github/adtp/Data_menoge/val
 test: /home/adtp//github/adtp/test
 
 # number of classes
