@@ -1,10 +1,11 @@
 # train and val datasets (image directory or *.txt file with image paths)
-train: ../ADTP/Data/
-val: ../ADTP/Data/
-test: ../ADTP/Data/
+train: /home/adtp/github/adtp/Data_Menoge_all/train
+val: /home/adtp/github/adtp/Data_Menoge_all/val
+test: /home/adtp/github/adtp/Data_Menoge_all/val
 
 # number of classes
-nc: 5
+nc: 7
 
 # class names
-names: ['piece1', 'piece2', 'piece3', 'piece4', 'piece5',]
+#names: ['Capuchon_Plastique', 'Rondelle', 'vis', 'ecrou_carre', 'ecrou_rond','petit_ecrou', 'petit_vis']
+names: ['A', 'B', 'C', 'G', 'D','E', 'F']

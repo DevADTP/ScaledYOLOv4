@@ -73,7 +73,7 @@ def detect(save_img=False):
     else:
         import yaml  # for torch hub
         # yaml_file = Path(cfg).name
-        with open('data/coco.yaml') as f:
+        with open('data/adtp.yaml') as f:
             yaml = yaml.load(f, Loader=yaml.FullLoader)  # model dict
         names = yaml['names']
     colors = [[random.randint(0, 255) for _ in range(3)] for _ in range(len(names))]
