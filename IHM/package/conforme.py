@@ -51,7 +51,7 @@ def get_dict_quantity(dict_pred):
 
 #----------------------------------------------------------------------#
 
-def conformite_conditionnement_dict(dict_pred, fichier_pieces, serialPort):
+def conformite_conditionnement_dict(dict_pred, fichier_pieces):
 
 	for key, value in dict_pred.items():
 		if(value == []):
@@ -76,7 +76,10 @@ def conformite_conditionnement_dict(dict_pred, fichier_pieces, serialPort):
 		valide = 0
 	return valide
 #----------------------------------------------------------------------#
-def not_detected(serialPort):
+'''def not_detected(serialPort):
+	#serialPort.write(b'0')
+	print('')'''
+
+def not_detected():
 	#serialPort.write(b'0')
 	print('')
-

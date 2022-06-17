@@ -29,7 +29,7 @@ import json
 
 class Detector(object):
 
-    def __init__(self, weights='best_improve.pth', img_size=640, conf_thres=0.6,
+    def __init__(self, weights='best_improve.pth', img_size=736, conf_thres=0.7,
                  iou_thres=0.5, classes=None, agnostic_nms=True, cfg='models/yolov4-csp.yaml'):
         weight_path = '../weights/Trainings/Must/'
         self.weights = os.path.join(weight_path, weights)
@@ -62,6 +62,7 @@ class Detector(object):
     def prepare_image(self, image_bytes):
 
         image = Image.open(io.BytesIO(image_bytes))  # TODO a peut etre convertir en numpy
+        #image.save("ii.jpeg")
         image = transforms.ToTensor()(letterbox(np.array(image), new_shape=(self.img_size, self.img_size))[0])
         # Convert
         image = image.to(self.device)
@@ -75,10 +76,13 @@ class Detector(object):
         names = yaml_f['names']
 
         # Run inference
+        t1 = time_synchronized()
         pred = self.model(image, augment=False)[0].detach().to('cpu')
         # Apply NMS
         pred = non_max_suppression(pred, self.conf_thres, self.iou_thres, classes=self.classes,
                                    agnostic=self.agnostic_nms)
+        t2 = time_synchronized()
+       # print('Done. (%.3fs)' % (t2 - t1))
         # Process detections
         data_json = json.dumps({})
         dict_pred = {}

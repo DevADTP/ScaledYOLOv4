@@ -1,8 +1,12 @@
 import json
+import os
+import uuid
 
 from flask import Flask, jsonify, request
-from detector import Detector
+from werkzeug.utils import secure_filename
 
+from detector import Detector
+import sys
 
 app = Flask(__name__)
 detectors = {
@@ -17,9 +21,11 @@ detectors = {
 def predict():
     if request.method == 'POST':
         file = request.files['file']
-        # print(request.form)
         detector = request.form['detector']
         img_bytes = file.read()
+
+        '''print("++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
+        print(type(img_bytes))'''
         return jsonify(detectors[detector].detect(image=img_bytes))
 
 

@@ -25,7 +25,7 @@ import paho.mqtt.client as mqtt
 #broker_adress = "192.168.4.1"
 broker_adress = "127.0.0.1"
 
-client = mqtt.Client("P1")
+client = mqtt.Client("P2")
 client.connect(broker_adress)
 dict_pred={}
 send_ok = 0 # boolean qui envoie la validité du sachet en json
@@ -168,12 +168,12 @@ def detect(save_img=False):
             if det is None:
                 #conforme.not_detected(serialPort)
                 conforme.not_detected()
-                trame = {"loc": "ESAT MENOGE", "poste": 1, "qrcode": "BBV59480A.txt",
-                         "quantity": cpt_qty, "valide": 0, "A": 0, "qtyA": 4, "B": 0, "qtyB": 4,
-                         "C": 0, "qtyC": 12, "G": 0, "qtyG": 0, "D": 0, "qtyD": 4, "E": 0, "qtyE": 4, "F": 0, "qtyF": 4}
                 '''trame = {"loc": "ESAT MENOGE", "poste": 1, "qrcode": "BBV59480A.txt",
                          "quantity": cpt_qty, "valide": 0, "A": 0, "qtyA": 4, "B": 0, "qtyB": 4,
-                         "C": 0, "qtyC": 5, "G": 0, "qtyG": 0, "D": 0, "qtyD": 0, "E": 0, "qtyE": 0, "F": 0, "qtyF": 0}'''
+                         "C": 0, "qtyC": 12, "G": 0, "qtyG": 0, "D": 0, "qtyD": 4, "E": 0, "qtyE": 4, "F": 0, "qtyF": 4}'''
+                trame = {"loc": "ESAT MENOGE", "poste": 1, "qrcode": "BBV59480A.txt",
+                         "quantity": cpt_qty, "valide": 0, "A": 0, "qtyA": 4, "B": 0, "qtyB": 4,
+                         "C": 0, "qtyC": 5, "G": 0, "qtyG": 0, "D": 0, "qtyD": 0, "E": 0, "qtyE": 0, "F": 0, "qtyF": 0}
                 if(cpt_qty == 0):
                     if(QrCode_scanned == 1):
                         cpt_qty = quantity
@@ -184,7 +184,7 @@ def detect(save_img=False):
                 send_ok = 0
 
                 trame = json.dumps(trame)
-                client.publish("IA_inference_poste1", trame)
+                client.publish("IA_inference_poste2", trame)
             if det is not None and len(det):
                 # Rescale boxes from img_size to im0 size
                 det[:, :4] = scale_coords(img.shape[2:], det[:, :4], im0.shape).round()
@@ -208,7 +208,7 @@ def detect(save_img=False):
                 trame = {"loc": "ESAT MENOGE", "poste": 1, "qrcode": nom, "quantity": cpt_qty , "valide":valide} # valide vs send_ok
                 Merge(dict_quantity,trame)
                 trame = json.dumps(trame)
-                client.publish("IA_inference_poste1", trame)
+                client.publish("IA_inference_poste2", trame)
 
                 for key in dict_pred:
                     dict_pred[key].pop()
