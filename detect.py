@@ -151,7 +151,7 @@ def detect(save_img=False):
                 for c in det[:, -1].unique():
                     n = (det[:, -1] == c).sum()  # detections per class
                     s += '%g %ss, ' % (n, names[int(c)])  # add to string
-                    dict_pred[names[int(c)]] = [n.item()]
+                    #dict_pred[names[int(c)]] = [n.item()]
 
                 data_json = json.dumps(dict_pred, sort_keys=True, indent=4, separators=(',', ': '))
                 # conforme.conformite_conditionnement_dict(dict_pred,nom, serialPort)

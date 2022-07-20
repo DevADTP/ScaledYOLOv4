@@ -79,7 +79,7 @@ class Detector(object):
         t1 = time_synchronized()
         pred = self.model(image, augment=False)[0].detach().to('cpu')
         # Apply NMS
-        pred = non_max_suppression(pred, self.conf_thres, self.iou_thres, classes=self.classes,
+        pred = non_max_suppression(pred, self.conf_thres, self.LoadImagesiou_thres, classes=self.classes,
                                    agnostic=self.agnostic_nms)
         t2 = time_synchronized()
        # print('Done. (%.3fs)' % (t2 - t1))

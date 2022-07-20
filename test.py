@@ -34,7 +34,8 @@ def test(data,
          dataloader=None,
          save_dir='',
          merge=False,
-         save_txt=False):
+         save_txt=False,
+         half=False):
     # Initialize/load model and set device
     training = model is not None
     if training:  # called by train.py
@@ -58,7 +59,7 @@ def test(data,
         imgsz = check_img_size(imgsz, s=model.stride.max())  # check img_size
 
     # Half
-    half = device.type != 'cpu'  # half precision only supported on CUDA
+    half = device.type != 'cpu' and half  # half precision only supported on CUDA
     if half:
         model.half()
 
@@ -262,6 +263,7 @@ if __name__ == '__main__':
     parser.add_argument('--merge', action='store_true', help='use Merge NMS')
     parser.add_argument('--verbose', action='store_true', help='report mAP by class')
     parser.add_argument('--save-txt', action='store_true', help='save results to *.txt')
+    parser.add_argument('--half', action='store_true', help='half precision')
     parser.add_argument('--name', default='', help='renames results.txt to results_name.txt if supplied')
     parser.add_argument('--logdir', type=str, default='runs/', help='logging directory')
     opt = parser.parse_args()
@@ -279,7 +281,8 @@ if __name__ == '__main__':
                        opt.save_json,
                        opt.single_cls,
                        opt.augment,
-                       opt.verbose)
+                       opt.verbose,
+                       half=opt.half)
         tb_writer = SummaryWriter(log_dir=increment_dir(Path(opt.logdir) / 'exp', opt.name + '_' + str(opt.img_size)))
         tags = ['metrics/precision', 'metrics/recall', 'metrics/mAP_0.5', 'metrics/mAP_0.5:0.95']
         for x, tag in zip(list(r), tags):

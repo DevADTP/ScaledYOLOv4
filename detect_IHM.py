@@ -8,6 +8,7 @@ from pathlib import Path
 import cv2
 import torch
 import torch.backends.cudnn as cudnn
+import numpy as np
 from numpy import random
 
 from models.yolo import Model
@@ -22,27 +23,26 @@ import serial
 import json
 import paho.mqtt.client as mqtt
 
-#broker_adress = "192.168.4.1"
+# broker_adress = "192.168.4.1"
 broker_adress = "127.0.0.1"
 
 client = mqtt.Client("P1")
 client.connect(broker_adress)
-dict_pred={}
-send_ok = 0 # boolean qui envoie la validité du sachet en json
-QrCode_scanned = 0 # # envoie d'un signal pour dire qu'un qr code a ete scanné
+dict_pred = {}
+send_ok = 0  # boolean qui envoie la validité du sachet en json
+QrCode_scanned = 0  # # envoie d'un signal pour dire qu'un qr code a ete scanné
 quantity = 60
-cpt_qty =quantity
-trame={"loc":"ESAT MENOGE","poste":1,"qrcode":"BBV59480A","quantity":cpt_qty}
+cpt_qty = quantity
+trame = {"loc": "ESAT MENOGE", "poste": 1, "qrcode": "BBV59480A", "quantity": cpt_qty}
 tab_fiches = ["BBV59480A.txt", "CCV59480A.txt"]
+
 
 def Merge(dict1, dict2):
     # function that merges two dict (changes made in dict2)
-    return(dict2.update(dict1))
-
+    return (dict2.update(dict1))
 
 
 def detect(save_img=False):
-
     out, source, weights, view_img, save_txt, imgsz, cfg = \
         opt.output, opt.source, opt.weights, opt.view_img, opt.save_txt, opt.img_size, opt.cfg
     webcam = source == '0' or source.startswith('rtsp') or source.startswith('http') or source.endswith('.txt')
@@ -52,7 +52,8 @@ def detect(save_img=False):
     if os.path.exists(out):
         shutil.rmtree(out)  # delete output folder
     os.makedirs(out)  # make new output folder
-    half = device.type != 'cpu'  # half precision only supported on CUDA
+    half = device.type != 'cpu' and opt.half  # half precision only supported on CUDA
+
 
     # Load model
     if cfg == '':
@@ -85,6 +86,8 @@ def detect(save_img=False):
         view_img = True
         cudnn.benchmark = True  # set True to speed up constant image size inference
         dataset = LoadStreams(source, img_size=imgsz)
+
+
     else:
         save_img = True
         dataset = LoadImages(source, img_size=imgsz)
@@ -101,7 +104,6 @@ def detect(save_img=False):
             yaml = yaml.load(f, Loader=yaml.FullLoader)  # model dict
         names = yaml['names']
     colors = [[random.randint(0, 255) for _ in range(3)] for _ in range(len(names))]
-
 
     conforme.init_conform(dict_pred, tab_fiches[0])
 
@@ -141,8 +143,8 @@ def detect(save_img=False):
             s += '%gx%g ' % img.shape[2:]  # print string
             s_tmp = s
             gn = torch.tensor(im0.shape)[[1, 0, 1, 0]]  # normalization gain whwh
-            #time.sleep(1.5)
-            #serialString = serialPort.readline()
+            # time.sleep(1.5)
+            # serialString = serialPort.readline()
 
             global cpt_qty
             global send_ok
@@ -165,21 +167,29 @@ def detect(save_img=False):
             print("\n--------------------------------\n")
             print("fiche utilisée : " +nom)'''
 
+            # save image if s is pressed
+            path_images_captured = "/home/adtp/github/adtp/ScaledYOLOv4/images_captured"
+            if cv2.waitKey(1) == ord('s'):
+                cv2.imwrite(os.path.join(path_images_captured, "frame%d.jpg" % int(time.time())), dataset.imgs[0])
+                print("\nsaved\n")
+                time.sleep(1)
+            # saved
+
             if det is None:
-                #conforme.not_detected(serialPort)
+                # conforme.not_detected(serialPort)
                 conforme.not_detected()
-                trame = {"loc": "ESAT MENOGE", "poste": 1, "qrcode": "BBV59480A.txt",
-                         "quantity": cpt_qty, "valide": 0, "A": 0, "qtyA": 4, "B": 0, "qtyB": 4,
-                         "C": 0, "qtyC": 12, "G": 0, "qtyG": 0, "D": 0, "qtyD": 4, "E": 0, "qtyE": 4, "F": 0, "qtyF": 4}
                 '''trame = {"loc": "ESAT MENOGE", "poste": 1, "qrcode": "BBV59480A.txt",
                          "quantity": cpt_qty, "valide": 0, "A": 0, "qtyA": 4, "B": 0, "qtyB": 4,
-                         "C": 0, "qtyC": 5, "G": 0, "qtyG": 0, "D": 0, "qtyD": 0, "E": 0, "qtyE": 0, "F": 0, "qtyF": 0}'''
-                if(cpt_qty == 0):
-                    if(QrCode_scanned == 1):
+                         "C": 0, "qtyC": 12, "G": 0, "qtyG": 0, "D": 0, "qtyD": 4, "E": 0, "qtyE": 4, "F": 0, "qtyF": 4}'''
+                trame = {"loc": "ESAT MENOGE", "poste": 1, "qrcode": "BBV59480A.txt",
+                         "quantity": cpt_qty, "valide": 0, "A": 0, "qtyA": 4, "B": 0, "qtyB": 4,
+                         "C": 0, "qtyC": 5, "G": 0, "qtyG": 0, "D": 0, "qtyD": 0, "E": 0, "qtyE": 0, "F": 0, "qtyF": 2}
+                if (cpt_qty == 0):
+                    if (QrCode_scanned == 1):
                         cpt_qty = quantity
                         QrCode_scanned = 0
-                if(send_ok == 1):
-                    cpt_qty = cpt_qty-1
+                if (send_ok == 1):
+                    cpt_qty = cpt_qty - 1
 
                 send_ok = 0
 
@@ -194,19 +204,20 @@ def detect(save_img=False):
                     s += '%g %ss, ' % (n, names[int(c)])  # add to string
                     dict_pred[names[int(c)]] = [n.item()]
 
-                #valide = conforme.conformite_conditionnement_dict(dict_pred,nom, serialPort)
+                # valide = conforme.conformite_conditionnement_dict(dict_pred,nom, serialPort)
                 valide = conforme.conformite_conditionnement_dict(dict_pred, nom)
-                #Mise en forme de la trame pour envoie vers le broker
+                # Mise en forme de la trame pour envoie vers le broker
                 dict_quantity = conforme.get_dict_quantity(dict_pred)
 
-                if(valide == 1):
-                    send_ok =1
+                if (valide == 1):
+                    send_ok = 1
 
                 print("/*/*/*/*/*/*/*/\n")
                 print(QrCode_scanned)
 
-                trame = {"loc": "ESAT MENOGE", "poste": 1, "qrcode": nom, "quantity": cpt_qty , "valide":valide} # valide vs send_ok
-                Merge(dict_quantity,trame)
+                trame = {"loc": "ESAT MENOGE", "poste": 1, "qrcode": nom, "quantity": cpt_qty,
+                         "valide": valide}  # valide vs send_ok
+                Merge(dict_quantity, trame)
                 trame = json.dumps(trame)
                 client.publish("IA_inference_poste1", trame)
 
@@ -226,8 +237,8 @@ def detect(save_img=False):
                         plot_one_box(xyxy, im0, label=label, color=colors[int(cls)], line_thickness=2)
 
             # Print time (inference + NMS)
-            #time.sleep(1.5)
-            #print('%sDone. (%.3fs)' % (s, t2 - t1))
+            # time.sleep(1.5)
+            # print('%sDone. (%.3fs)' % (s, t2 - t1))
             print("pièces détéctées : " + s[11:len(s)])
 
             print("\n--------------------------------\n")
@@ -236,7 +247,7 @@ def detect(save_img=False):
                 cv2.imshow(p, im0)
 
                 if cv2.waitKey(1) == ord('q'):  # q to quit
-                    #serialPort.close()
+                    # serialPort.close()
                     raise StopIteration
 
             # Save results (image with detections)
@@ -263,6 +274,7 @@ def detect(save_img=False):
 
     print('Done. (%.3fs)' % (time.time() - t0))
 
+
 if __name__ == '__main__':
     '''serialPort = serial.Serial("/dev/ttyUSB0", baudrate=115200, timeout=1.0)
     if(serialPort.isOpen() == False):
@@ -281,11 +293,11 @@ if __name__ == '__main__':
     parser.add_argument('--agnostic-nms', action='store_true', help='class-agnostic NMS')
     parser.add_argument('--augment', action='store_true', help='augmented inference')
     parser.add_argument('--update', action='store_true', help='update all models')
+    parser.add_argument('--half', action='store_true', help='half precision')
     parser.add_argument('--cfg', type=str, default='models/yolov4-csp.yaml', help='model.yaml path')
     opt = parser.parse_args()
     print(opt)
 
-	
     with torch.no_grad():
         if opt.update:  # update all models (to fix SourceChangeWarning)
             for opt.weights in ['']:

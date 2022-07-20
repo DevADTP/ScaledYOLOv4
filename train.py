@@ -48,7 +48,7 @@ def train(hyp, opt, device, tb_writer=None):
 
     # Configure
     cuda = device.type != 'cpu'
-    init_seeds(2 + rank)
+    init_seeds(opt.seed)
     with open(opt.data) as f:
         data_dict = yaml.load(f, Loader=yaml.FullLoader)  # model dict
     train_path = data_dict['train']
@@ -397,6 +397,7 @@ if __name__ == '__main__':
     parser.add_argument('--adam', action='store_true', help='use torch.optim.Adam() optimizer')
     parser.add_argument('--sync-bn', action='store_true', help='use SyncBatchNorm, only available in DDP mode')
     parser.add_argument('--local_rank', type=int, default=-1, help='DDP parameter, do not modify')
+    parser.add_argument('--seed', type=int, default=1, help='pytorch random seed')
     parser.add_argument('--logdir', type=str, default='runs/', help='logging directory')
     opt = parser.parse_args()
 
