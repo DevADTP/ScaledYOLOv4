@@ -35,7 +35,25 @@ quantity = 60
 cpt_qty = quantity
 trame = {"loc": "ESAT MENOGE", "poste": 1, "qrcode": "BBV59480A", "quantity": cpt_qty}
 tab_fiches = ["BBV59480A.txt", "CCV59480A.txt"]
+etaler = 0
 
+
+def inverse_etaler(etaler):
+    result = etaler
+    if etaler == 0:
+        result = 1
+    else:
+        result = 0
+    return result
+
+def spread_out(dict_quantity):
+    tab_A = []
+    '''if(len(tab_A) == 10):
+        tab_A = []
+    else:'''
+    #tab_A.append(dict_quantity['A'])
+    time.sleep(1)
+    return tab_A
 
 def Merge(dict1, dict2):
     # function that merges two dict (changes made in dict2)
@@ -53,7 +71,6 @@ def detect(save_img=False):
         shutil.rmtree(out)  # delete output folder
     os.makedirs(out)  # make new output folder
     half = device.type != 'cpu' and opt.half  # half precision only supported on CUDA
-
 
     # Load model
     if cfg == '':
@@ -150,6 +167,7 @@ def detect(save_img=False):
             global send_ok
             global QrCode_scanned
             global nom  # nom du fhicher de la fiche scanné
+            global etaler
             try:
                 nom
             except NameError:
@@ -178,12 +196,15 @@ def detect(save_img=False):
             if det is None:
                 # conforme.not_detected(serialPort)
                 conforme.not_detected()
+
                 '''trame = {"loc": "ESAT MENOGE", "poste": 1, "qrcode": "BBV59480A.txt",
                          "quantity": cpt_qty, "valide": 0, "A": 0, "qtyA": 4, "B": 0, "qtyB": 4,
-                         "C": 0, "qtyC": 12, "G": 0, "qtyG": 0, "D": 0, "qtyD": 4, "E": 0, "qtyE": 4, "F": 0, "qtyF": 4}'''
+                         "C": 0, "qtyC": 5, "G": 0, "qtyG": 0, "D": 0, "qtyD": 0, "E": 0, "qtyE": 0, "F": 0, "qtyF": 2}'''
                 trame = {"loc": "ESAT MENOGE", "poste": 1, "qrcode": "BBV59480A.txt",
                          "quantity": cpt_qty, "valide": 0, "A": 0, "qtyA": 4, "B": 0, "qtyB": 4,
-                         "C": 0, "qtyC": 5, "G": 0, "qtyG": 0, "D": 0, "qtyD": 0, "E": 0, "qtyE": 0, "F": 0, "qtyF": 2}
+                         "C": 0, "qtyC": 5, "G": 0, "qtyG": 0, "D": 0, "qtyD": 0, "E": 0, "qtyE": 0, "F": 0, "qtyF": 2,
+                         "etaler": 0}
+
                 if (cpt_qty == 0):
                     if (QrCode_scanned == 1):
                         cpt_qty = quantity
@@ -192,7 +213,6 @@ def detect(save_img=False):
                     cpt_qty = cpt_qty - 1
 
                 send_ok = 0
-
                 trame = json.dumps(trame)
                 client.publish("IA_inference_poste1", trame)
             if det is not None and len(det):
@@ -218,6 +238,14 @@ def detect(save_img=False):
                 trame = {"loc": "ESAT MENOGE", "poste": 1, "qrcode": nom, "quantity": cpt_qty,
                          "valide": valide}  # valide vs send_ok
                 Merge(dict_quantity, trame)
+
+                if cv2.waitKey(1) == ord('e'):
+                    etaler = inverse_etaler(etaler)
+                    time.sleep(1)
+                #print(spread_out(dict_quantity))
+                print("etaler ++++++++++++++++++++" + str(etaler))
+                trame["etaler"] = etaler
+
                 trame = json.dumps(trame)
                 client.publish("IA_inference_poste1", trame)
 

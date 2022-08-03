@@ -18,7 +18,7 @@ from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
 
 import test  # import test.py to get mAP after each epoch
-from models.yolo import Model
+from models.yolo import Model, Detect
 from utils.datasets import create_dataloader
 from utils.general import (
     check_img_size, torch_distributed_zero_first, labels_to_class_weights, plot_labels, check_anchors,
@@ -69,15 +69,15 @@ def train(hyp, opt, device, tb_writer=None):
         model.load_state_dict(state_dict, strict=False)  # load
         # print('Transferred %g/%g items from %s' % (len(state_dict), len(model.state_dict()), weights))  # report
     else:
-        model = Model(opt.cfg, ch=3, nc=nc).to(device)# create
-        #model = model.to(memory_format=torch.channels_last)  # create
+        model = Model(opt.cfg, ch=3, nc=nc).to(device)  # create
+        # model = model.to(memory_format=torch.channels_last)  # create
 
     # Optimizer
     nbs = 64  # nominal batch size
     accumulate = max(round(nbs / total_batch_size), 1)  # accumulate loss before optimizing
     hyp['weight_decay'] *= total_batch_size * accumulate / nbs  # scale weight_decay
 
-    pg0, pg1, pg2 = [], [], []  # optimizer parameter groups
+    '''pg0, pg1, pg2 = [], [], []  # optimizer parameter groups
     for k, v in model.named_parameters():
         v.requires_grad = True
         if '.bias' in k:
@@ -95,7 +95,50 @@ def train(hyp, opt, device, tb_writer=None):
     optimizer.add_param_group({'params': pg1, 'weight_decay': hyp['weight_decay']})  # add pg1 with weight_decay
     optimizer.add_param_group({'params': pg2})  # add pg2 (biases)
     print('Optimizer groups: %g .bias, %g conv.weight, %g other' % (len(pg2), len(pg1), len(pg0)))
-    del pg0, pg1, pg2
+    del pg0, pg1, pg2'''
+    # modification Mikael
+    pg1 = []  # groups conv weights -> weight_decay, lr0 (Detect)
+    pg2 = []  # groups conv weights -> weight_decay, lr_backbone (backbone)
+    pg3 = []  # groups le reste -> lr0 (Detect)
+    pg4 = []  # groups le reste -> lr_backbone (backbone)
+
+    if hyp.get('lr_backbone', 1) == 0:
+        for n, c in model.model.named_children():
+            if isinstance(c, Detect):
+                print(c)
+            else:
+                for param in c.parameters():
+                    param.requires_grad = False
+
+    for k, v in model.named_parameters():
+        if '31' in k:
+            if '.weight' in k and '.bn' not in k:
+                pg1.append(v)  # apply weight decay
+            else:
+                pg3.append(v)
+        else:
+            if '.weight' in k and '.bn' not in k:
+                pg2.append(v)  # apply weight decay
+            else:
+                pg4.append(v)
+
+    if 'lr_backbone' not in hyp:
+        hyp['lr_backbone'] = hyp['lr0']
+
+    if opt.adam:
+        optimizer = optim.Adam(pg3, lr=hyp['lr0'], betas=(hyp['momentum'], 0.999))  # adjust beta1 to momentum
+    else:
+        optimizer = optim.SGD(pg3, lr=hyp['lr0'],
+                              momentum=hyp['momentum'],
+                              nesterov=True)
+    optimizer.add_param_group({'params': pg1,
+                               'weight_decay': hyp['weight_decay']})  # add pg1 with weight_decay
+    optimizer.add_param_group({'params': pg2,
+                               'lr': hyp['lr_backbone'],
+                               'weight_decay': hyp['weight_decay']})  # add pg2 with different lr
+    optimizer.add_param_group({'params': pg4, 'lr': hyp['lr_backbone']})  # add pg2 with different lr
+
+    # Fin modification Mikael
 
     # Scheduler https://arxiv.org/pdf/1812.01187.pdf
     # https://pytorch.org/docs/stable/_modules/torch/optim/lr_scheduler.html#OneCycleLR
@@ -254,7 +297,7 @@ def train(hyp, opt, device, tb_writer=None):
             with amp.autocast(enabled=cuda):
                 # Forward
                 pred = model(imgs)
-                #pred = model(imgs.to(memory_format=torch.channels_last))
+                # pred = model(imgs.to(memory_format=torch.channels_last))
 
                 # Loss
                 loss, loss_items = compute_loss(pred, targets.to(device), model)  # scaled by batch_size
@@ -289,8 +332,8 @@ def train(hyp, opt, device, tb_writer=None):
                     result = plot_images(images=imgs, targets=targets, paths=paths, fname=f)
                     if tb_writer and result is not None:
                         tb_writer.add_image(f, result, dataformats='HWC', global_step=epoch)
-                #if ni == 0:
-                 #  tb_writer.add_graph(model, imgs)  # add model to tensorboard
+                # if ni == 0:
+                #  tb_writer.add_graph(model, imgs)  # add model to tensorboard
 
             # end batch ------------------------------------------------------------------------------------------------
 
@@ -344,8 +387,8 @@ def train(hyp, opt, device, tb_writer=None):
 
                 # Save last, best and delete
                 torch.save(ckpt, last)
-                if epoch >= (epochs-30):
-                    torch.save(ckpt, last.replace('.pt','_{:03d}.pt'.format(epoch)))
+                if epoch >= (epochs - 30):
+                    torch.save(ckpt, last.replace('.pt', '_{:03d}.pt'.format(epoch)))
                 if best_fitness == fi:
                     torch.save(ckpt, best)
                 del ckpt
@@ -360,7 +403,7 @@ def train(hyp, opt, device, tb_writer=None):
             if os.path.exists(f1):
                 os.rename(f1, f2)  # rename
                 ispt = f2.endswith('.pt')  # is *.pt
-                strip_optimizer(f2, f2.replace('.pt','_strip.pt')) if ispt else None  # strip optimizer
+                strip_optimizer(f2, f2.replace('.pt', '_strip.pt')) if ispt else None  # strip optimizer
                 os.system('gsutil cp %s gs://%s/weights' % (f2, opt.bucket)) if opt.bucket and ispt else None  # upload
         # Finish
         if not opt.evolve:
